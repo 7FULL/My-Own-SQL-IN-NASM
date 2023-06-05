@@ -1,49 +1,90 @@
-global _start		; must be declared for linker
-
 section .data
-
-	first_prompt db "Enter the first number "		; first_prompt="Enter the first number "
-
-	len_first_prompt equ $ - first_prompt		; len_first_prompt equals size of first_prompt
-
-section .bss
-
-	first resb 64		; Unitialized data variable first
+    frase db "Esta es una frase de ejemplo", 0
+    longitud equ $-frase
+    palabra1 db 100 dup(0) ; Espacio para almacenar la primera palabra
+    palabra2 db 100 dup(0) ; Espacio para almacenar la primera palabra
+    palabra3 db 100 dup(0) ; Espacio para almacenar la primera palabra
 
 section .text
+    global _start
 
-_start:			; start label
+_start:
+    ; Inicializar los registros
+    mov ebx, 0       ; indicador de posición en la frase
+    mov ecx, 0       ; indicador de posición en la palabra
+    mov edi, palabra1 ; dirección de la primera palabra
 
-	mov eax, 4		; sys_write system call
+    ; Recorrer la frase
+recorrer_frase:
+jmp fin
 
-	mov ebx, 1		; stdout file descriptor
+    cmp ebx, longitud ; verificar si hemos llegado al final de la frase
+    jge fin
 
-	mov ecx, first_prompt		; ecx=first_prompt
+    ; Obtener el carácter actual
+    mov al, [frase + ebx]
 
-	mov edx, len_first_prompt		; edx=len_first_prompt
+    ; Verificar si es un espacio en blanco
+    cmp al, ' '
+    je es_espacio
 
-	int 0x80		; Calling interrupt handler
+    ; Almacenar el carácter en la primera palabra
+    mov [edi + ecx], al
 
-	mov eax, 3		; sys_read system call
+    ; Incrementar el contador de posición en la palabra
+    inc ecx
+    jmp siguiente_caracter
 
-	mov ebx, 2		; stdin file descriptor
+es_espacio:
+    ; Verificar si hemos encontrado la primera palabra completa
+    cmp ecx, 0
+    jne fin
+        ; Inicializar los registros
+    mov ebx, 0       ; indicador de posición en la frase
+    mov ecx, 0       ; indicador de posición en la palabra
+    mov edi, palabra2 ; dirección de la primera palabra
 
-	mov ecx, first		; Read first input value in first
+    ; Inicializar los registros
+    mov ebx, 0       ; indicador de posición en la frase
+    mov ecx, 0       ; indicador de posición en la palabra
+    mov edi, palabra3 ; dirección de la primera palabra
 
-	mov edx, 5	; 5 bytes (numeric, 1 for sign) of that data value
 
-	int 0x80		; Calling interrupt handler
+siguiente_caracter:
+    ; Incrementar el contador de posición en la frase y continuar recorriendo
+    inc ebx
+    ;mov eax, 4                  ; Número de llamada al sistema para escribir
+    ;mov ebx, 1                  ; Descriptor de archivo (stdout)
+    ;mov ecx, primera_palabra            ; Puntero al mensaje
+    ;mov edx, 10                ; Longitud del mensaje
+    ;int 80h                       ; Llamar al sistema operativo
 
-	mov eax, [first]		; eax equal to value of first
+    jmp recorrer_frase
 
-	jmp exit		; Jump to exit label
+fin:
 
-exit:		; exit label
+    ; La primera palabra se ha almacenado en primera_palabra
+    ; Puedes utilizar la cadena primera_palabra según tus necesidades
+    mov eax, 4                  ; Número de llamada al sistema para escribir
+    mov ebx, 1                  ; Descriptor de archivo (stdout)
+    mov ecx, palabra1            ; Puntero al mensaje
+    mov edx, 10                ; Longitud del mensaje
+    int 80h                       ; Llamar al sistema operativo
 
-	mov eax , 1		; sys_exit system call
+    mov eax, 4                  ; Número de llamada al sistema para escribir
+    mov ebx, 1                  ; Descriptor de archivo (stdout)
+    mov ecx, palabra2            ; Puntero al mensaje
+    mov edx, 10                ; Longitud del mensaje
+    int 80h                       ; Llamar al sistema operativo
 
-	mov ebx , 0		; setting exit status
+    mov eax, 4                  ; Número de llamada al sistema para escribir
+    mov ebx, 1                  ; Descriptor de archivo (stdout)
+    mov ecx, palabra3            ; Puntero al mensaje
+    mov edx, 10                ; Longitud del mensaje
+    int 80h                       ; Llamar al sistema operativo
 
-	int 0x80		; Calling interrupt handler to exit program
-
+    ; Salir del programa
+    mov eax, 1
+    xor ebx, ebx
+    int 0x80
 
