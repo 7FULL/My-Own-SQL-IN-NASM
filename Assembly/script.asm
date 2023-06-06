@@ -1,15 +1,21 @@
 section .data
-    mensaje db "Ingresa una frase:", 0
-    mensaje_longitud equ $-mensaje
-    frase db 100 dup(0) ; Espacio para almacenar la frase ingresada
-    longitud equ 100    ; Longitud máxima de la frase
-    palabra1 db 100 dup(0) ; Espacio para almacenar la primera palabra
-    palabra2 db 100 dup(0) ; Espacio para almacenar la segunda palabra
-    palabra3 db 100 dup(0) ; Espacio para almacenar la tercera palabra
+    frase db 100 dup(0) 
+    longitud equ 100    
+    palabra1 db 100 dup(0)
+    palabra2 db 100 dup(0) 
+    palabra3 db 100 dup(0) 
     error db "No se pudo abrir el archivo.", 10
     errorLen equ $ - error
     error2 db "No se pudo leer el archivo.", 10
     errorLen2 equ $ - error2
+    error3 db "Orden no encontrada.", 10
+    errorLen3 equ $ - error3
+    saltoLinea db 10,0
+    select db "select",0
+    insert db "insert",0
+    exitText db "exit",0
+    prueba db "Llego hasta aqui",10     ;para poder hacer debug
+    pruebaLen equ $ - prueba
 
 section .bss
     content resb 4096
@@ -18,13 +24,20 @@ section .text
     global _start
 
 _start:
-    ; Mostrar mensaje para ingresar la frase
-    mov eax, 4                  ; Número de llamada al sistema para escribir
-    mov ebx, 1                  ; Descriptor de archivo (stdout)
-    mov ecx, mensaje            ; Puntero al mensaje
-    mov edx, mensaje_longitud   ; Longitud del mensaje
-    int 80h                    ; Llamar al sistema operativo
-    
+    first:
+    ;call nuevaLinea
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, saltoLinea
+    mov edx, 2
+    int 80h
+
+    ;call nuevaLinea
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, saltoLinea
+    mov edx, 2
+    int 80h
     ; Leer la frase ingresada por el usuario
     mov eax, 3                  ; Número de llamada al sistema para leer
     mov ebx, 0                  ; Descriptor de archivo (stdin)
@@ -75,35 +88,106 @@ siguiente_palabra:
     jmp fin
 
 fin:
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, palabra3
-    int 80h
-    ;Termina de dividir palabras
-    mov ecx, palabra3
-    mov eax, 5
-    ; Añadir la extension basandonos en el lenght
-    ; podriamos añadir byte a byte (inc eax)
-    mov byte [ecx+eax-1], "."
-    mov byte [ecx+eax], "t"
-    mov byte [ecx+eax+1], "x"
-    mov byte [ecx+eax+2], "t"
+    ; Inicializar registros
+    mov ecx, 0       ; contador de posición en los strings
+    mov esi, palabra1    ; puntero a la primera palabra
+    mov edi, select    
 
-    add eax,4       ;añadimos a la longitud los 4 bytes extra
-                    ;que hemos añadido
+    comparar_caracteres:
+        mov al, [esi + ecx] ; obtener carácter de str1
+        cmp al, [edi + ecx] ; comparar con carácter de str2
+        jne comprobarInsert ; si son diferentes, saltar a etiqueta strings_diferentes
 
-    ; El sistema operativo espera que las cadenas de texto
-    ; acaben en un byte nulo
-    ; Añadir al nombre de archivo con un byte nulo
-    mov byte [ecx+eax-1], 0
+        ; Verificar si se llegó al final de los strings
+        cmp al, 0
+        je selectDone   ;input == select
 
-        ; Mostrar el contenido del archivo
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, palabra3
-    int 80h
+        ; Incrementar contador y continuar comparando
+        inc ecx
+        jmp comparar_caracteres
 
-    jmp abrirArchivo
+    comprobarInsert:
+        ; Inicializar registros
+        mov ecx, 0       ; contador de posición en los strings
+        mov esi, palabra1    ; puntero al primer string
+        mov edi, insert    ; puntero al segundo string
+
+    comparar_caracteresInsert:
+        mov al, [esi + ecx] ; obtener carácter de str1
+        cmp al, [edi + ecx] ; comparar con carácter de str2
+        jne comprobarExit ; si son diferentes, saltar a etiqueta strings_diferentes
+
+        ; Verificar si se llegó al final de los strings
+        cmp al, 0
+        je insertDone   ;input == insert
+
+        ; Incrementar contador y continuar comparando
+        inc ecx
+        jmp comparar_caracteresInsert
+
+    insertDone:
+        ;Termina de dividir palabras
+        mov ecx, palabra3
+        mov eax, 5
+        ; Añadir la extension basandonos en el lenght
+        ; podriamos añadir byte a byte (inc eax)
+        mov byte [ecx+eax-1], "."
+        mov byte [ecx+eax], "t"
+        mov byte [ecx+eax+1], "x"
+        mov byte [ecx+eax+2], "t"
+
+        add eax,4       ;añadimos a la longitud los 4 bytes extra
+                        ;que hemos añadido
+
+        ; El sistema operativo espera que las cadenas de texto
+        ; acaben en un byte nulo
+        ; Añadir al nombre de archivo con un byte nulo
+        mov byte [ecx+eax-1], 0
+
+        jmp abrirArchivo
+
+    comprobarExit:
+        ; Inicializar registros
+        mov ecx, 0       ; contador de posición en los strings
+        mov esi, palabra1    ; puntero al primer string
+        mov edi, exitText    ; puntero al segundo string
+
+    comparar_caracteresExit:
+        mov al, [esi + ecx] ; obtener carácter de str1
+        cmp al, [edi + ecx] ; comparar con carácter de str2
+        jne ordenNoEncontrada ; si son diferentes, saltar a etiqueta strings_diferentes
+
+        ; Verificar si se llegó al final de los strings
+        cmp al, 0
+        je exit   ;input == exit
+
+        ; Incrementar contador y continuar comparando
+        inc ecx
+        jmp comparar_caracteresExit
+
+
+    selectDone:
+
+        ;Preparar el input para poder abrir el archivo
+
+        mov ecx, palabra3
+        mov eax, 5
+        ; Añadir la extension basandonos en el lenght
+        ; podriamos añadir byte a byte (inc eax)
+        mov byte [ecx+eax-1], "."
+        mov byte [ecx+eax], "t"
+        mov byte [ecx+eax+1], "x"
+        mov byte [ecx+eax+2], "t"
+
+        add eax,4       ;añadimos a la longitud los 4 bytes extra
+                        ;que hemos añadido
+
+        ; El sistema operativo espera que las cadenas de texto
+        ; acaben en un byte nulo
+        ; Añadir al nombre de archivo con un byte nulo
+        mov byte [ecx+eax-1], 0
+
+        jmp abrirArchivo
 
 almacenar_palabra2:
     ; Inicializar los registros
@@ -124,6 +208,15 @@ almacenar_palabra3:
 
 
 abrirArchivo:
+    call debug
+
+    ;call nuevaLinea
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, saltoLinea
+    mov edx, 2
+    int 80h
+    
     ; Abrir el archivo en modo lectura
     mov eax, 5
     mov ebx, palabra3
@@ -154,7 +247,45 @@ abrirArchivo:
     mov ebx, ebx
     int 80h
 
-    jmp exit
+    jmp first
+
+exit:
+    ; Salir del programa
+    mov eax, 1
+    mov ebx, 0
+    int 80h
+debug:
+    push eax
+    push ebx
+    push ecx
+    push edx
+
+    mov eax, 4                  ; Número de llamada al sistema para escribir
+    mov ebx, 1                  ; Descriptor de archivo (stdout)
+    mov ecx, prueba            ; Puntero al mensaje
+    mov edx, pruebaLen                ; Longitud del mensaje
+    int 80h                       ; Llamar al sistema operativo
+
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+
+    ret
+
+
+;<<<<<<<<<<<Apartado para errores>>>>>>>>>>>
+
+
+
+ordenNoEncontrada:
+    mov eax, 4
+    mov ebx, 2
+    mov ecx, error3
+    mov edx, errorLen3
+    int 80h
+
+    jmp _start
 
 errorOpen_handling:
     mov eax, 4
@@ -163,7 +294,7 @@ errorOpen_handling:
     mov edx, errorLen
     int 80h
 
-    jmp exit
+    jmp _start
 
 errorReading_handling:
     mov eax, 4
@@ -171,10 +302,4 @@ errorReading_handling:
     mov ecx, error2
     mov edx, errorLen2
     int 80h
-    jmp exit
-
-exit:
-    ; Salir del programa
-    mov eax, 1
-    mov ebx, 0
-    int 80h
+    jmp _start
