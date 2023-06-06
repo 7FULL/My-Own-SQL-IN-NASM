@@ -17,6 +17,6 @@ _start:
 
     ; Salir del programa
     mov eax, 1                 ; Número de llamada al sistema para salir
-    xor ebx, 0                ; Código de salida (0)
+    mov ebx, 0                ; Código de salida (0)
     int 80h                     ; Llamar al sistema operativo
 
