@@ -32,8 +32,6 @@ _start:
     mov edx, longitud           ; Longitud máxima de entrada
     int 80h                    ; Llamar al sistema operativo
 
-    jmp fin
-
     ; Inicializar los registros
     mov ebx, 0       ; Indicador de posición en la frase
     mov ecx, 0       ; Indicador de posición en la palabra
@@ -77,9 +75,13 @@ siguiente_palabra:
     jmp fin
 
 fin:
-    ;Termina de dividir palabras
-
+    mov eax, 4
+    mov ebx, 1
     mov ecx, palabra3
+    int 80h
+    ;Termina de dividir palabras
+    mov ecx, palabra3
+    mov eax, 5
     ; Añadir la extension basandonos en el lenght
     ; podriamos añadir byte a byte (inc eax)
     mov byte [ecx+eax-1], "."
@@ -94,6 +96,12 @@ fin:
     ; acaben en un byte nulo
     ; Añadir al nombre de archivo con un byte nulo
     mov byte [ecx+eax-1], 0
+
+        ; Mostrar el contenido del archivo
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, palabra3
+    int 80h
 
     jmp abrirArchivo
 
