@@ -5,14 +5,14 @@ section .data
     palabra2 db 100 dup(0) 
     palabra3 db 100 dup(0) 
     palabraAux db 100 dup(0) ;Palabra auxiliar para guardar la de los archivos
+    bienvenida db "Bienvenido a FULLSQL", 10
+    bienvenidaLen equ $ - bienvenida
     error db "No se pudo abrir el archivo.", 10
     errorLen equ $ - error
     error2 db "No se pudo leer el archivo.", 10
     errorLen2 equ $ - error2
     error3 db "Orden no encontrada.", 10
     errorLen3 equ $ - error3
-    error4 db "Archivo cerrado incorrectamente.", 10
-    errorLen4 equ $ - error4
     saltoLinea db 10,0
     select db "select",0
     insert db "insert",0
@@ -20,15 +20,24 @@ section .data
     todo db "*",0
     prueba db "Llego hasta aqui",10     ;para poder hacer debug
     pruebaLen equ $ - prueba
+    fileIdentificator db 100
 
 section .bss
-    fileIdentificator resb 100
     content resb 4096
 
 section .text
     global _start
 
 _start:
+    ;Mensaje de bienvenida
+    mov eax, 4               
+    mov ebx, 1               
+    mov ecx, bienvenida            
+    mov edx, bienvenidaLen             
+    int 80h                       
+
+
+    start:
     mov ecx, 100     ; Cantidad de bites a limpiar
 
     ; Limpiar palabra1
@@ -47,8 +56,8 @@ _start:
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     ; Limpiar fileIdentificator
-    mov edi, [fileIdentificator] ; Dirección base de fileIdentificator
-    mov eax, 0     ; Valor cero
+    mov edi, fileIdentificator ; Dirección base de fileIdentificator
+    xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     ; Limpiar palabra auxiliar
@@ -241,6 +250,12 @@ almacenar_palabra3:
 
 
 abrirArchivo:
+    ; Mostrar el contenido del archivo
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, content
+    int 80h
+
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
@@ -248,6 +263,12 @@ abrirArchivo:
     mov edx, 2
     int 80h
 
+    ; Mostrar el contenido del archivo
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, content
+    int 80h
+    
     ; Abrir el archivo en modo lectura
     mov eax, 5
     mov ebx, palabra3
@@ -267,19 +288,6 @@ abrirArchivo:
     test eax, eax
     js errorReading_handling
 
-    ; Mostrar el contenido del archivo
-    ;mov eax, 4
-    ;mov ebx, 1
-    ;mov ecx, content
-    ;int 80h
-
-    ; Cerrar el archivo
-    mov eax, 6
-    mov ebx, [fileIdentificator]
-    int 80h
-    test eax,eax
-    js errorClosing_handling
-
 
     ;<<<<<<<<Aqui empezamos la comprobacion de que devolver>>>>>>>>
     
@@ -297,17 +305,28 @@ abrirArchivo:
 
         ;En este caso no nos hace falta contador 
         ;ya que "*" solo tiene un byte
+        je prtinAll   
 
+
+
+    prtinAll:
         ; Mostrar el contenido del archivo
         mov eax, 4
         mov ebx, 1
         mov ecx, content
         int 80h
-        jmp _start
+
+    cerrarArchivo:
+        ; Cerrar el archivo
+        mov eax, 6
+        mov ebx, [fileIdentificator]
+        int 80h
+
+        jmp start
 
     imprimirSoloDeseado:
         
-        jmp exit
+        jmp cerrarArchivo
 
 exit:
     ; Salir del programa
@@ -349,7 +368,7 @@ ordenNoEncontrada:
     mov edx, errorLen3
     int 80h
 
-    jmp _start
+    jmp start
 
 errorOpen_handling:
     mov eax, 4
@@ -358,15 +377,7 @@ errorOpen_handling:
     mov edx, errorLen
     int 80h
 
-    jmp _start
-
-errorClosing_handling:
-    mov eax, 4
-    mov ebx, 2
-    mov ecx, error4
-    mov edx, errorLen4
-    int 80h
-    jmp _start
+    jmp start
 
 errorReading_handling:
     mov eax, 4
@@ -374,4 +385,4 @@ errorReading_handling:
     mov ecx, error2
     mov edx, errorLen2
     int 80h
-    jmp _start
+    jmp start

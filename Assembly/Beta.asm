@@ -4,32 +4,28 @@ section .data
     palabra1 db 100 dup(0)
     palabra2 db 100 dup(0) 
     palabra3 db 100 dup(0) 
-    palabraAux db 100 dup(0) ;Palabra auxiliar para guardar la de los archivos
     error db "No se pudo abrir el archivo.", 10
     errorLen equ $ - error
     error2 db "No se pudo leer el archivo.", 10
     errorLen2 equ $ - error2
     error3 db "Orden no encontrada.", 10
     errorLen3 equ $ - error3
-    error4 db "Archivo cerrado incorrectamente.", 10
-    errorLen4 equ $ - error4
     saltoLinea db 10,0
     select db "select",0
     insert db "insert",0
     exitText db "exit",0
-    todo db "*",0
     prueba db "Llego hasta aqui",10     ;para poder hacer debug
     pruebaLen equ $ - prueba
+    fileIdentificator db 100
 
 section .bss
-    fileIdentificator resb 100
     content resb 4096
 
 section .text
     global _start
 
 _start:
-    mov ecx, 100     ; Cantidad de bites a limpiar
+    mov ecx, 100     ; Cantidad de bytes a limpiar
 
     ; Limpiar palabra1
     mov edi, palabra1 ; Dirección base de palabra1
@@ -47,31 +43,25 @@ _start:
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     ; Limpiar fileIdentificator
-    mov edi, [fileIdentificator] ; Dirección base de fileIdentificator
-    mov eax, 0     ; Valor cero
-    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
-
-    ; Limpiar palabra auxiliar
-    mov edi, palabraAux ; Dirección base de fileIdentificator
+    mov edi, fileIdentificator ; Dirección base de fileIdentificator
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
-    ; nuevaLinea
+
+    
+    ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
     mov ecx, saltoLinea
     mov edx, 2
     int 80h
 
-    ; nuevaLinea
+    ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
     mov ecx, saltoLinea
     mov edx, 2
     int 80h
-
-
-
     ; Leer la frase ingresada por el usuario
     mov eax, 3                  ; Número de llamada al sistema para leer
     mov ebx, 0                  ; Descriptor de archivo (stdin)
@@ -198,6 +188,7 @@ fin:
         inc ecx
         jmp comparar_caracteresExit
 
+
     selectDone:
         ;Preparar el input para poder abrir el archivo
 
@@ -241,13 +232,15 @@ almacenar_palabra3:
 
 
 abrirArchivo:
+    call debug
+
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
     mov ecx, saltoLinea
     mov edx, 2
     int 80h
-
+    
     ; Abrir el archivo en modo lectura
     mov eax, 5
     mov ebx, palabra3
@@ -268,46 +261,17 @@ abrirArchivo:
     js errorReading_handling
 
     ; Mostrar el contenido del archivo
-    ;mov eax, 4
-    ;mov ebx, 1
-    ;mov ecx, content
-    ;int 80h
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, content
+    int 80h
 
     ; Cerrar el archivo
     mov eax, 6
     mov ebx, [fileIdentificator]
     int 80h
-    test eax,eax
-    js errorClosing_handling
 
-
-    ;<<<<<<<<Aqui empezamos la comprobacion de que devolver>>>>>>>>
-    
-
-    ; Inicializar registros
-    mov ecx,0
-    mov esi, palabra2
-    mov edi, todo    
-
-    comparar_caracteresPalabra2:
-        ; vamos comparando las letras
-        mov al, [esi] 
-        cmp al, [edi] 
-        jne imprimirSoloDeseado ; comprobar si es "*"
-
-        ;En este caso no nos hace falta contador 
-        ;ya que "*" solo tiene un byte
-
-        ; Mostrar el contenido del archivo
-        mov eax, 4
-        mov ebx, 1
-        mov ecx, content
-        int 80h
-        jmp _start
-
-    imprimirSoloDeseado:
-        
-        jmp exit
+    jmp _start
 
 exit:
     ; Salir del programa
@@ -337,7 +301,6 @@ debug:
     ret
 
 
-
 ;<<<<<<<<<<<Apartado para errores>>>>>>>>>>>
 
 
@@ -358,14 +321,6 @@ errorOpen_handling:
     mov edx, errorLen
     int 80h
 
-    jmp _start
-
-errorClosing_handling:
-    mov eax, 4
-    mov ebx, 2
-    mov ecx, error4
-    mov edx, errorLen4
-    int 80h
     jmp _start
 
 errorReading_handling:
