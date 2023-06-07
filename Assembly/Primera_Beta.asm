@@ -28,14 +28,15 @@ section .text
 
 _start:
     ;Mensaje de bienvenida
-    mov eax, 4               
-    mov ebx, 1               
-    mov ecx, bienvenida            
-    mov edx, bienvenidaLen             
-    int 80h                       
-
+    mov eax, 4
+    mov ebx, 2
+    mov ecx, bienvenida
+    mov edx, bienvenidaLen
+    int 80h
 
     start:
+
+
     mov ecx, 100     ; Cantidad de bytes a limpiar
 
     ; Limpiar palabra1
@@ -282,7 +283,7 @@ abrirArchivo:
     mov ebx, [fileIdentificator]
     int 80h
 
-    jmp _start
+    jmp start
 
 exit:
     ; Salir del programa
