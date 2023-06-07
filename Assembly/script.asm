@@ -16,6 +16,7 @@ section .data
     exitText db "exit",0
     prueba db "Llego hasta aqui",10     ;para poder hacer debug
     pruebaLen equ $ - prueba
+    fileIdentificator db 100
 
 section .bss
     content resb 4096
@@ -24,7 +25,30 @@ section .text
     global _start
 
 _start:
-    first:
+    mov ecx, 100     ; Cantidad de bytes a limpiar
+
+    ; Limpiar palabra1
+    mov edi, palabra1 ; Dirección base de palabra1
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra2
+    mov edi, palabra2 ; Dirección base de palabra2
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra3
+    mov edi, palabra3 ; Dirección base de palabra3
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar fileIdentificator
+    mov edi, fileIdentificator ; Dirección base de fileIdentificator
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+
+    
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
@@ -53,14 +77,14 @@ _start:
 recorrer_frase:
     ; Verificar si hemos llegado al final de la frase
     cmp ebx, longitud
-    jge fin
+    jge siguiente_palabra
 
     ; Obtener el carácter actual
     mov al, [frase + ebx]
 
     ; Verificar si es un espacio en blanco
     cmp al, ' '
-    je es_espacio
+    je siguiente_palabra
 
     ; Almacenar el carácter en la palabra correspondiente
     mov [edi + ecx], al
@@ -68,10 +92,6 @@ recorrer_frase:
     ; Incrementar el contador de posición en la palabra
     inc ecx
     jmp siguiente_caracter
-
-es_espacio:
-    ; Verificar si hemos encontrado la primera palabra completa
-    jmp siguiente_palabra
 
 siguiente_caracter:
     ; Incrementar el contador de posición en la frase y continuar recorriendo
@@ -89,14 +109,15 @@ siguiente_palabra:
 
 fin:
     ; Inicializar registros
-    mov ecx, 0       ; contador de posición en los strings
-    mov esi, palabra1    ; puntero a la primera palabra
+    mov ecx, 0       ; contador
+    mov esi, palabra1   
     mov edi, select    
 
     comparar_caracteres:
-        mov al, [esi + ecx] ; obtener carácter de str1
-        cmp al, [edi + ecx] ; comparar con carácter de str2
-        jne comprobarInsert ; si son diferentes, saltar a etiqueta strings_diferentes
+        ; vamos conparando las letras
+        mov al, [esi + ecx] 
+        cmp al, [edi + ecx] 
+        jne comprobarInsert ; si no es un select saltamos a comprobar si es un insert
 
         ; Verificar si se llegó al final de los strings
         cmp al, 0
@@ -108,14 +129,15 @@ fin:
 
     comprobarInsert:
         ; Inicializar registros
-        mov ecx, 0       ; contador de posición en los strings
-        mov esi, palabra1    ; puntero al primer string
-        mov edi, insert    ; puntero al segundo string
+        mov ecx, 0       ; contador
+        mov esi, palabra1
+        mov edi, insert    
 
     comparar_caracteresInsert:
-        mov al, [esi + ecx] ; obtener carácter de str1
-        cmp al, [edi + ecx] ; comparar con carácter de str2
-        jne comprobarExit ; si son diferentes, saltar a etiqueta strings_diferentes
+        ; vamos comparando las letras
+        mov al, [esi + ecx] 
+        cmp al, [edi + ecx] 
+        jne comprobarExit ; si no es un insert pasamos a comprobar si es un exit
 
         ; Verificar si se llegó al final de los strings
         cmp al, 0
@@ -126,7 +148,7 @@ fin:
         jmp comparar_caracteresInsert
 
     insertDone:
-        ;Termina de dividir palabras
+        ; seleccionamos la palabra y su longitud
         mov ecx, palabra3
         mov eax, 5
         ; Añadir la extension basandonos en el lenght
@@ -148,14 +170,15 @@ fin:
 
     comprobarExit:
         ; Inicializar registros
-        mov ecx, 0       ; contador de posición en los strings
-        mov esi, palabra1    ; puntero al primer string
-        mov edi, exitText    ; puntero al segundo string
+        mov ecx, 0       ; contador
+        mov esi, palabra1   
+        mov edi, exitText  
 
     comparar_caracteresExit:
-        mov al, [esi + ecx] ; obtener carácter de str1
-        cmp al, [edi + ecx] ; comparar con carácter de str2
-        jne ordenNoEncontrada ; si son diferentes, saltar a etiqueta strings_diferentes
+        ; vamos comprobando las letras
+        mov al, [esi + ecx] 
+        cmp al, [edi + ecx] 
+        jne ordenNoEncontrada ; en caso de que no sea exit ni insert ni select mandamos mensajito al usuario
 
         ; Verificar si se llegó al final de los strings
         cmp al, 0
@@ -167,7 +190,6 @@ fin:
 
 
     selectDone:
-
         ;Preparar el input para poder abrir el archivo
 
         mov ecx, palabra3
@@ -190,12 +212,14 @@ fin:
         jmp abrirArchivo
 
 almacenar_palabra2:
+    ; sobreescribimos el puntero al registro1 por el registro 2
     ; Inicializar los registros
     mov ecx, 0       ; Indicador de posición en la palabra
     mov edi, palabra2 ; Dirección de la segunda palabra
     jmp siguiente_caracter
 
 almacenar_palabra3:
+    ; sobreescribimos el puntero al registro 2 por el registro 3
     ; Inicializar los registros
     mov ecx, 0       ; Indicador de posición en la palabra
     mov edi, palabra3 ; Dirección de la tercera palabra
@@ -225,7 +249,7 @@ abrirArchivo:
     int 80h
     test eax, eax
     js errorOpen_handling
-    mov ebx, eax  ; Guardar el descriptor
+    mov [fileIdentificator], eax  ; Guardar el descriptor
 
     ; Leer el contenido del archivo
     mov eax, 3
@@ -244,16 +268,18 @@ abrirArchivo:
 
     ; Cerrar el archivo
     mov eax, 6
-    mov ebx, ebx
+    mov ebx, [fileIdentificator]
     int 80h
 
-    jmp first
+    jmp _start
 
 exit:
     ; Salir del programa
     mov eax, 1
     mov ebx, 0
     int 80h
+    
+;subrutina
 debug:
     push eax
     push ebx
@@ -266,6 +292,7 @@ debug:
     mov edx, pruebaLen                ; Longitud del mensaje
     int 80h                       ; Llamar al sistema operativo
 
+    ; restauramos desde la pila
     pop edx
     pop ecx
     pop ebx
