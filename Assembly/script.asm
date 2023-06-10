@@ -22,6 +22,7 @@ section .data
     pruebaLen equ $ - prueba
     length db 128 dup(0) 
     fraseLength db 128 dup(0) 
+    patata db 100 dup(0)
 
 section .bss
     fileIdentificator resb 100
@@ -35,6 +36,16 @@ _start:
 
     ; Limpiar palabra1
     mov edi, palabra1 ; Dirección base de palabra1
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra1
+    mov edi, patata ; Dirección base de palabra1
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra1
+    mov edi, [patata] ; Dirección base de palabra1
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
@@ -57,6 +68,13 @@ _start:
     mov edi, palabraAux ; Dirección base de fileIdentificator
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra auxiliar
+    mov edi, [palabraAux] ; Dirección base de fileIdentificator
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+
 
     ; nuevaLinea
     mov eax, 4
@@ -204,8 +222,7 @@ fin:
         ;Preparar el input para poder abrir el archivo
 
         mov ebx, palabra3
-        call len            ;subrutina para obtener longitud de palabra3
-
+        call len
         mov eax, ecx        ;la subrutina devuelve el valor en ecx
         mov ecx, palabra3
 
@@ -321,7 +338,7 @@ abrirArchivo:
         recorrer_fraseDeseado:
             ; Verificar si hemos llegado al final de la frase
             cmp ebx, longitud
-            jge siguiente_palabraDeseado
+            jge _start
 
             ; Obtener el carácter actual
             mov al, [content + ebx]
@@ -350,15 +367,16 @@ abrirArchivo:
             ; comprueba que palabra 2 esta dentro
             ; de palabraaux en ese caso imprime palabraaux 
 
-            mov ebx,palabraAux
+            mov ebx,palabra2
             call len            ;obtener longitud de frase
+            mov [patata],ecx
 
             mov edi, palabraAux
             mov esi, palabra2
 
             ;como la propia subrutina ya guarda
             ;el valor en ecx nos ahorramos tener que hacerlo
-            ;mov ecx, 100        ;longitud de frase
+            mov ecx, 100        ;longitud de frase
 
             lodsb         
 
@@ -370,7 +388,7 @@ abrirArchivo:
                 push esi
                 push edi
                 push ecx
-                mov ecx, 3
+                mov ecx, [patata]
                 dec ecx       ; La primera letra de Word ya ha sido comprobada.
                 repe cmpsb    ; Establece ZF=1 cuando se encuentra la palabra.
                 pop ecx       ; Restaura el tamaño restante de Sentence (18).
@@ -387,12 +405,11 @@ abrirArchivo:
                 mov edx, 100                ; Longitud del mensaje
                 int 80h                       ; Llamar al sistema operativo
 
-                jmp _start
-
             notFound:
                 ; La palabra no está presente en Sentence.
                 ; Aquí puedes agregar el código que deseas ejecutar cuando no se encuentra la palabra.
-            jmp _start
+        jmp _start
+
 
 
 exit:

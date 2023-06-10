@@ -18,10 +18,8 @@ section .data
     insert db "insert",0
     exitText db "exit",0
     todo db "*",0
-    prueba db "Llego hasta aqui",10     ;para poder hacer debug
+    prueba db "Esto es un debug",10     ;para poder hacer debug
     pruebaLen equ $ - prueba
-    length db 128 dup(0) 
-    fraseLength db 128 dup(0) 
 
 section .bss
     fileIdentificator resb 100
@@ -94,7 +92,7 @@ recorrer_frase:
     ; Obtener el carácter actual
     mov al, [frase + ebx]
 
-    ; Verificar si es un espacio en blanco
+    ; Verificar si es un espacio en blanco o un salto de línea
     cmp al, ' '
     je siguiente_palabra
 
@@ -201,12 +199,10 @@ fin:
         jmp comparar_caracteresExit
 
     selectDone:
-        ;Preparar el input para poder abrir el archivo
-
         mov ebx, palabra3
-        call len            ;subrutina para obtener longitud de palabra3
+        ;call len            ;subrutina para obtener longitud de palabra3
 
-        mov eax, ecx        ;la subrutina devuelve el valor en ecx
+        mov eax, 4        ;la subrutina devuelve el valor en ecx
         mov ecx, palabra3
 
         ; Añadir la extension basandonos en el lenght
@@ -350,15 +346,19 @@ abrirArchivo:
             ; comprueba que palabra 2 esta dentro
             ; de palabraaux en ese caso imprime palabraaux 
 
-            mov ebx,palabraAux
-            call len            ;obtener longitud de frase
-
             mov edi, palabraAux
             mov esi, palabra2
 
+            mov ebx,palabra2
+            call len    
+            mov edx,ecx
+
+            mov ebx,palabraAux
+            call len            ;obtener longitud de frase
+
             ;como la propia subrutina ya guarda
             ;el valor en ecx nos ahorramos tener que hacerlo
-            ;mov ecx, 100        ;longitud de frase
+            ;mov ecx, 4096        ;longitud de frase
 
             lodsb         
 
@@ -370,7 +370,7 @@ abrirArchivo:
                 push esi
                 push edi
                 push ecx
-                mov ecx, 3
+                mov ecx, edx    ; tamaño de palabra2
                 dec ecx       ; La primera letra de Word ya ha sido comprobada.
                 repe cmpsb    ; Establece ZF=1 cuando se encuentra la palabra.
                 pop ecx       ; Restaura el tamaño restante de Sentence (18).
@@ -379,8 +379,7 @@ abrirArchivo:
                 jne search    ; Si ZF=0, busca "l" nuevamente. La segunda vez será exitoso.
 
             found:
-                ; La palabra se encontró en Sentence en la dirección EDI-1.
-                ; Aquí puedes agregar el código que deseas ejecutar cuando se encuentra la palabra.
+                ; La palabra se encontró
                 mov eax, 4                  ; Número de llamada al sistema para escribir
                 mov ebx, 1                  ; Descriptor de archivo (stdout)
                 mov ecx, palabraAux            ; Puntero al mensaje
@@ -439,6 +438,7 @@ len:
     ret
 
 
+
 ;<<<<<<<<<<<Apartado para errores>>>>>>>>>>>
 
 
@@ -453,6 +453,12 @@ ordenNoEncontrada:
     jmp _start
 
 errorOpen_handling:
+    mov eax, 4
+    mov ebx, 2
+    mov ecx, palabra3
+    mov edx, 100
+    int 80h
+
     mov eax, 4
     mov ebx, 2
     mov ecx, error
