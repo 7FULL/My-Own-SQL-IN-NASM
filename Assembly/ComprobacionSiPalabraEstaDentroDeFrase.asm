@@ -2,7 +2,7 @@ section .data
     SentenceSize equ 27
     WordSize equ 3
     Sentence db "guardar la de los archivos."
-    palabra db "guardar"
+    palabra db "patata"
 
     mensaje db 'No encontrada!', 10
     len equ $ - mensaje
