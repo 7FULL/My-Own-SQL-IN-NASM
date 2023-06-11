@@ -264,6 +264,13 @@ almacenar_palabra3:
 
 
 abrirArchivo:
+
+    ;call nuevaLinea
+    mov eax, 4
+    mov ebx, 1
+    mov ecx, palabra3
+    mov edx, 100
+    int 80h
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
@@ -363,52 +370,7 @@ abrirArchivo:
             jmp recorrer_fraseDeseado
 
         siguiente_palabraDeseado:
-            ; el regitro se queda en palabraaux
-            ; comprueba que palabra 2 esta dentro
-            ; de palabraaux en ese caso imprime palabraaux 
-
-            mov ebx,palabra2
-            call len            ;obtener longitud de frase
-            mov [patata],ecx
-
-            mov edi, palabraAux
-            mov esi, palabra2
-
-            ;como la propia subrutina ya guarda
-            ;el valor en ecx nos ahorramos tener que hacerlo
-            mov ecx, 100        ;longitud de frase
-
-            lodsb         
-
-            search:
-                repne scasb   ; Busca la primera letra de la palabra
-                jne notFound
-
-                ; Hemos encontrado la primera "l". EDI apunta a la siguiente "a", ECX=18.
-                push esi
-                push edi
-                push ecx
-                mov ecx, [patata]
-                dec ecx       ; La primera letra de Word ya ha sido comprobada.
-                repe cmpsb    ; Establece ZF=1 cuando se encuentra la palabra.
-                pop ecx       ; Restaura el tamaño restante de Sentence (18).
-                pop edi       ; Restaura el puntero de Sentence después de "l".
-                pop esi       ; Restaura el puntero de Word a "os".
-                jne search    ; Si ZF=0, busca "l" nuevamente. La segunda vez será exitoso.
-
-            found:
-                ; La palabra se encontró en Sentence en la dirección EDI-1.
-                ; Aquí puedes agregar el código que deseas ejecutar cuando se encuentra la palabra.
-                mov eax, 4                  ; Número de llamada al sistema para escribir
-                mov ebx, 1                  ; Descriptor de archivo (stdout)
-                mov ecx, palabraAux            ; Puntero al mensaje
-                mov edx, 100                ; Longitud del mensaje
-                int 80h                       ; Llamar al sistema operativo
-
-            notFound:
-                ; La palabra no está presente en Sentence.
-                ; Aquí puedes agregar el código que deseas ejecutar cuando no se encuentra la palabra.
-        jmp _start
+        jmp siguiente_caracterDeseado
 
 
 

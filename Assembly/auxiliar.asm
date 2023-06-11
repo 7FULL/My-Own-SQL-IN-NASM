@@ -18,8 +18,11 @@ section .data
     insert db "insert",0
     exitText db "exit",0
     todo db "*",0
-    prueba db "Esto es un debug",10     ;para poder hacer debug
+    prueba db "Llego hasta aqui",10     ;para poder hacer debug
     pruebaLen equ $ - prueba
+    length db 128 dup(0) 
+    fraseLength db 128 dup(0) 
+    patata db 100 dup(0)
 
 section .bss
     fileIdentificator resb 100
@@ -33,6 +36,16 @@ _start:
 
     ; Limpiar palabra1
     mov edi, palabra1 ; Dirección base de palabra1
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra1
+    mov edi, patata ; Dirección base de palabra1
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra1
+    mov edi, [patata] ; Dirección base de palabra1
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
@@ -55,6 +68,13 @@ _start:
     mov edi, palabraAux ; Dirección base de fileIdentificator
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra auxiliar
+    mov edi, [palabraAux] ; Dirección base de fileIdentificator
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+
 
     ; nuevaLinea
     mov eax, 4
@@ -92,7 +112,7 @@ recorrer_frase:
     ; Obtener el carácter actual
     mov al, [frase + ebx]
 
-    ; Verificar si es un espacio en blanco o un salto de línea
+    ; Verificar si es un espacio en blanco
     cmp al, ' '
     je siguiente_palabra
 
@@ -199,10 +219,11 @@ fin:
         jmp comparar_caracteresExit
 
     selectDone:
-        mov ebx, palabra3
-        ;call len            ;subrutina para obtener longitud de palabra3
+        ;Preparar el input para poder abrir el archivo
 
-        mov eax, 4        ;la subrutina devuelve el valor en ecx
+        mov ebx, palabra3
+        call len
+        mov eax, ecx        ;la subrutina devuelve el valor en ecx
         mov ecx, palabra3
 
         ; Añadir la extension basandonos en el lenght
@@ -317,7 +338,7 @@ abrirArchivo:
         recorrer_fraseDeseado:
             ; Verificar si hemos llegado al final de la frase
             cmp ebx, longitud
-            jge siguiente_palabraDeseado
+            jge _start
 
             ; Obtener el carácter actual
             mov al, [content + ebx]
@@ -346,19 +367,16 @@ abrirArchivo:
             ; comprueba que palabra 2 esta dentro
             ; de palabraaux en ese caso imprime palabraaux 
 
+            mov ebx,palabra2
+            call len            ;obtener longitud de frase
+            mov [patata],ecx
+
             mov edi, palabraAux
             mov esi, palabra2
 
-            mov ebx,palabra2
-            call len    
-            mov edx,ecx
-
-            mov ebx,palabraAux
-            call len            ;obtener longitud de frase
-
             ;como la propia subrutina ya guarda
             ;el valor en ecx nos ahorramos tener que hacerlo
-            ;mov ecx, 4096        ;longitud de frase
+            mov ecx, 100        ;longitud de frase
 
             lodsb         
 
@@ -370,7 +388,7 @@ abrirArchivo:
                 push esi
                 push edi
                 push ecx
-                mov ecx, edx    ; tamaño de palabra2
+                mov ecx, [patata]
                 dec ecx       ; La primera letra de Word ya ha sido comprobada.
                 repe cmpsb    ; Establece ZF=1 cuando se encuentra la palabra.
                 pop ecx       ; Restaura el tamaño restante de Sentence (18).
@@ -379,19 +397,19 @@ abrirArchivo:
                 jne search    ; Si ZF=0, busca "l" nuevamente. La segunda vez será exitoso.
 
             found:
-                ; La palabra se encontró
+                ; La palabra se encontró en Sentence en la dirección EDI-1.
+                ; Aquí puedes agregar el código que deseas ejecutar cuando se encuentra la palabra.
                 mov eax, 4                  ; Número de llamada al sistema para escribir
                 mov ebx, 1                  ; Descriptor de archivo (stdout)
                 mov ecx, palabraAux            ; Puntero al mensaje
                 mov edx, 100                ; Longitud del mensaje
                 int 80h                       ; Llamar al sistema operativo
 
-                jmp _start
-
             notFound:
                 ; La palabra no está presente en Sentence.
                 ; Aquí puedes agregar el código que deseas ejecutar cuando no se encuentra la palabra.
-            jmp _start
+        jmp _start
+
 
 
 exit:
@@ -438,7 +456,6 @@ len:
     ret
 
 
-
 ;<<<<<<<<<<<Apartado para errores>>>>>>>>>>>
 
 
@@ -453,12 +470,6 @@ ordenNoEncontrada:
     jmp _start
 
 errorOpen_handling:
-    mov eax, 4
-    mov ebx, 2
-    mov ecx, palabra3
-    mov edx, 100
-    int 80h
-
     mov eax, 4
     mov ebx, 2
     mov ecx, error
