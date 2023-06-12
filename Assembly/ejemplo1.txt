@@ -1,3 +1,6 @@
 id:1,nombre:david,edad:26;
 id:2,nombre:david,edad:75;
 id:3,nombre:pablo,edad:50;
+id:4,nombre:ejemplo,edad:36;
+id:5,nombre:patata,edad:24;
+id:6,nombre:loquesea,edad:17;

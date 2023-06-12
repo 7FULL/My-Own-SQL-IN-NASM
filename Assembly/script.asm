@@ -105,7 +105,7 @@ _start:
         inc esi         ; Mover al siguiente byte
         loop limpiarFrase    ; Repetir hasta que se hayan limpiado todos los bytes
     
-    mov ecx, 100       ; Número de bytes en la variable palabraAux
+    mov ecx, 4096       ; Número de bytes en la variable palabraAux
     mov esi, content ; Dirección base de la variable palabraAux
     
     limpiarContent:
@@ -113,6 +113,15 @@ _start:
         mov [esi], al   ; Establecer el byte actual en cero
         inc esi         ; Mover al siguiente byte
         loop limpiarContent    ; Repetir hasta que se hayan limpiado todos los bytes
+
+    mov ecx, 100       ; Número de bytes en la variable palabraAux
+    mov esi, palabra2 ; Dirección base de la variable palabraAux
+    
+    limpiarPalabra2:
+        xor eax, eax    ; Establecer eax en cero
+        mov [esi], al   ; Establecer el byte actual en cero
+        inc esi         ; Mover al siguiente byte
+        loop limpiarPalabra2    ; Repetir hasta que se hayan limpiado todos los bytes
     
 
 
