@@ -16,7 +16,6 @@ section .data
     saltoLinea db 10,0
     select db "select",0
     insert db "insert",0
-    create db "create",0
     exitText db "exit",0
     todo db "*",0
     prueba db "Llego hasta aqui",10     ;para poder hacer debug
@@ -205,31 +204,6 @@ fin:
         inc ecx
         jmp comparar_caracteres
 
-    selectDone:
-        ;Preparar el input para poder abrir el archivo
-
-        mov ebx, palabra3
-        call len
-        mov eax, ecx        ;la subrutina devuelve el valor en ecx
-        mov ecx, palabra3
-
-        ; Añadir la extension basandonos en el lenght
-        ; podriamos añadir byte a byte (inc eax)
-        mov byte [ecx+eax-1], "."
-        mov byte [ecx+eax], "t"
-        mov byte [ecx+eax+1], "x"
-        mov byte [ecx+eax+2], "t"
-
-        add eax,4       ;añadimos a la longitud los 4 bytes extra
-                        ;que hemos añadido
-
-        ; El sistema operativo espera que las cadenas de texto
-        ; acaben en un byte nulo
-        ; Añadir al nombre de archivo con un byte nulo
-        mov byte [ecx+eax-1], 0
-
-        jmp abrirArchivo
-
     comprobarInsert:
         ; Inicializar registros
         mov ecx, 0       ; contador
@@ -240,7 +214,7 @@ fin:
         ; vamos comparando las letras
         mov al, [esi + ecx] 
         cmp al, [edi + ecx] 
-        jne comprobarCreate ; si no es un insert pasamos a comprobar si es un exit
+        jne comprobarExit ; si no es un insert pasamos a comprobar si es un exit
 
         ; Verificar si se llegó al final de los strings
         cmp al, 0
@@ -293,49 +267,6 @@ fin:
 
         jmp escribirEnArchivo
 
-    comprobarCreate:
-        ; Inicializar registros
-        mov ecx, 0       ; contador
-        mov esi, palabra1
-        mov edi, create    
-
-    comparar_caracteresCreate:
-        ; vamos comparando las letras
-        mov al, [esi + ecx] 
-        cmp al, [edi + ecx] 
-        jne comprobarExit ; si no es un insert pasamos a comprobar si es un exit
-
-        ; Verificar si se llegó al final de los strings
-        cmp al, 0
-        je createDone   ;input == insert
-
-        ; Incrementar contador y continuar comparando
-        inc ecx
-        jmp comparar_caracteresCreate
-
-    createDone:
-        mov ebx, palabra3
-        call len
-        mov eax, ecx        ;la subrutina devuelve el valor en ecx
-        mov ecx, palabra3
-
-        ; Añadir la extension basandonos en el lenght
-        ; podriamos añadir byte a byte (inc eax)
-        mov byte [ecx+eax-1], "."
-        mov byte [ecx+eax], "t"
-        mov byte [ecx+eax+1], "x"
-        mov byte [ecx+eax+2], "t"
-
-        add eax,4       ;añadimos a la longitud los 4 bytes extra
-                        ;que hemos añadido
-
-        ; El sistema operativo espera que las cadenas de texto
-        ; acaben en un byte nulo
-        ; Añadir al nombre de archivo con un byte nulo
-        mov byte [ecx+eax-1], 0
-
-        jmp crearArchivo
-
     comprobarExit:
         ; Inicializar registros
         mov ecx, 0       ; contador
@@ -356,6 +287,31 @@ fin:
         inc ecx
         jmp comparar_caracteresExit
 
+    selectDone:
+        ;Preparar el input para poder abrir el archivo
+
+        mov ebx, palabra3
+        call len
+        mov eax, ecx        ;la subrutina devuelve el valor en ecx
+        mov ecx, palabra3
+
+        ; Añadir la extension basandonos en el lenght
+        ; podriamos añadir byte a byte (inc eax)
+        mov byte [ecx+eax-1], "."
+        mov byte [ecx+eax], "t"
+        mov byte [ecx+eax+1], "x"
+        mov byte [ecx+eax+2], "t"
+
+        add eax,4       ;añadimos a la longitud los 4 bytes extra
+                        ;que hemos añadido
+
+        ; El sistema operativo espera que las cadenas de texto
+        ; acaben en un byte nulo
+        ; Añadir al nombre de archivo con un byte nulo
+        mov byte [ecx+eax-1], 0
+
+        jmp abrirArchivo
+
 almacenar_palabra2:
     ; sobreescribimos el puntero al registro1 por el registro 2
     ; Inicializar los registros
@@ -375,12 +331,6 @@ almacenar_palabra3:
 ;<<<<<<<<<<<<<<<<<MANEJO DE ARCHIVOS>>>>>>>>>>>>>>>>>
 
 
-
-crearArchivo:
-    mov ecx, 0777o          ; set all permissions to read, write, execute
-    mov ebx, palabra3       ; filename we will create
-    mov eax, 8              ; invoke SYS_CREAT (kernel opcode 8)
-    int 80h                 ; call the kernel    
 
 escribirEnArchivo:
     ; Abrir el archivo en modo escritura

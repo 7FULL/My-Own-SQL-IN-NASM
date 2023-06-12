@@ -200,7 +200,6 @@ fin:
         inc ecx
         jmp comparar_caracteresExit
 
-
     selectDone:
         ;Preparar el input para poder abrir el archivo
 
