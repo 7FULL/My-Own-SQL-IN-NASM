@@ -17,6 +17,7 @@ section .data
     select db "select",0
     insert db "insert",0
     create db "create",0
+    drop db "drop",0
     exitText db "exit",0
     todo db "*",0
     prueba db "Llego hasta aqui",10     ;para poder hacer debug
@@ -40,11 +41,6 @@ section .text
 
 _start:
     mov ecx, 100     ; Cantidad de bites a limpiar
-
-    ; Limpiar palabra1
-    mov edi, palabra1 ; Dirección base de palabra1
-    xor eax, eax     ; Valor cero
-    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     ; Limpiar palabra1
     mov edi, lenAux ; Dirección base de palabra1
@@ -290,7 +286,7 @@ fin:
         ; vamos comparando las letras
         mov al, [esi + ecx] 
         cmp al, [edi + ecx] 
-        jne comprobarExit ; si no es un insert pasamos a comprobar si es un exit
+        jne comprobarDrop ; si no es un insert pasamos a comprobar si es un exit
 
         ; Verificar si se llegó al final de los strings
         cmp al, 0
@@ -324,6 +320,51 @@ fin:
         inc eax
 
         jmp crearArchivo
+
+    comprobarDrop:
+        ; Inicializar registros
+        mov ecx, 0       ; contador
+        mov esi, palabra1
+        mov edi, drop    
+
+    comparar_caracteresDrop:
+        ; vamos comparando las letras
+        mov al, [esi + ecx] 
+        cmp al, [edi + ecx] 
+        jne comprobarExit ; si no es un insert pasamos a comprobar si es un exit
+
+        ; Verificar si se llegó al final de los strings
+        cmp al, 0
+        je dropDone   ;input == insert
+
+        ; Incrementar contador y continuar comparando
+        inc ecx
+        jmp comparar_caracteresDrop
+
+    dropDone:
+        mov ebx, palabra3
+        call len
+        mov eax, ecx        ;la subrutina devuelve el valor en ecx
+        mov ecx, palabra3
+
+        ; Añadir la extension basandonos en el lenght
+        ; podriamos añadir byte a byte (inc eax)
+        mov byte [ecx+eax-1], "."
+        mov byte [ecx+eax], "t"
+        mov byte [ecx+eax+1], "x"
+        mov byte [ecx+eax+2], "t"
+
+        add eax,4       ;añadimos a la longitud los 4 bytes extra
+                        ;que hemos añadido
+
+        ; El sistema operativo espera que las cadenas de texto
+        ; acaben en un byte nulo
+        ; Añadir al nombre de archivo con un byte nulo
+        mov byte [ecx+eax-1], 0
+
+        inc eax
+
+        jmp eliminarArchivo
 
     comprobarExit:
         ; Inicializar registros
@@ -364,6 +405,13 @@ almacenar_palabra3:
 ;<<<<<<<<<<<<<<<<<MANEJO DE ARCHIVOS>>>>>>>>>>>>>>>>>
 
 
+
+eliminarArchivo:
+    mov ebx, palabra3       ; filename we will create
+    mov eax, 10              ; invoke SYS_CREAT (kernel opcode 8)
+    int 80h                 ; call the kernel  
+    
+    jmp _start
 
 crearArchivo:
     mov ecx, 0777o          ; set all permissions to read, write, execute
@@ -590,7 +638,7 @@ exit:
     mov ebx, 0
     int 80h
     
-;subrutina
+;subrutina para debuguear
 debug:
     push eax
     push ebx
@@ -626,6 +674,7 @@ len:
     dec ecx
     pop ebx
     ret
+
 
 
 ;<<<<<<<<<<<Apartado para errores>>>>>>>>>>>
