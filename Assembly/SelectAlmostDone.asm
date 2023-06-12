@@ -65,12 +65,6 @@ _start:
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
-    ; Limpiar palabra3
-    mov edi, [palabra3] ; Dirección base de palabra3
-    xor eax, eax     ; Valor cero
-    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
-
-
     ; Limpiar fileIdentificator
     mov edi, [fileIdentificator] ; Dirección base de fileIdentificator
     mov eax, 0     ; Valor cero
@@ -86,16 +80,6 @@ _start:
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
-
-    mov ecx, 100       ; Número de bytes en la variable palabraAux
-    mov esi, palabra3 ; Dirección base de la variable palabraAux
-        
-    limpiarPalabra3:
-        xor eax, eax    ; Establecer eax en cero
-        mov [esi], al   ; Establecer el byte actual en cero
-        inc esi         ; Mover al siguiente byte
-        loop limpiarPalabra3    ; Repetir hasta que se hayan limpiado todos los bytes
-     
 
 
     ; nuevaLinea
@@ -200,31 +184,9 @@ fin:
         jmp comparar_caracteresInsert
 
     insertDone:
-        ;Preparar el registro a insertar
-        mov ebx, palabra2
-        call len
-        mov eax, ecx        ;la subrutina devuelve el valor en ecx
-        mov ecx, palabra2
-
-        ; Añadir la extension basandonos en el lenght
-        ; podriamos añadir byte a byte (inc eax)
-        mov byte [ecx+eax], ";"
-        mov byte [ecx+eax+1], 10
-
-        add eax,2       ;añadimos a la longitud los 4 bytes extra
-                        ;que hemos añadido
-
-        ; El sistema operativo espera que las cadenas de texto
-        ; acaben en un byte nulo
-        ; Añadir al nombre de archivo con un byte nulo
-        mov byte [ecx+eax], 0
-
-
-        mov ebx, palabra3
-        call len
-        mov eax, ecx        ;la subrutina devuelve el valor en ecx
+        ; seleccionamos la palabra y su longitud
         mov ecx, palabra3
-
+        mov eax, 5
         ; Añadir la extension basandonos en el lenght
         ; podriamos añadir byte a byte (inc eax)
         mov byte [ecx+eax-1], "."
@@ -240,7 +202,7 @@ fin:
         ; Añadir al nombre de archivo con un byte nulo
         mov byte [ecx+eax-1], 0
 
-        jmp escribirEnArchivo
+        jmp abrirArchivo
 
     comprobarExit:
         ; Inicializar registros
@@ -307,50 +269,7 @@ almacenar_palabra3:
 
 
 
-escribirEnArchivo:
-    ; Abrir el archivo en modo escritura
-    mov eax, 5
-    mov ebx, palabra3
-    mov ecx, 1          ; solo escritura
-    mov edx, 02002h     ; append (escribir al final del archivo)
-    int 80h
-    test eax, eax
-    js errorOpen_handling
-    mov [fileIdentificator], eax  ; Guardar el descriptor
-
-    ; Mover el puntero de archivo al final del archivo
-    mov eax, 19        ; Código de llamada al sistema para obtener la posición actual del archivo
-    mov ebx, [fileIdentificator]      ; Descriptor de archivo devuelto por la llamada a sys_open
-    mov ecx, 0      ; Desplazamiento: 0 (desde el final del archivo)
-    mov edx, 2        ; Origen: SEEK_END (final del archivo)
-    int 80h          ; Llamar al sistema para mover el puntero de archivo
-
-    mov ebx, palabra2
-    call len
-    ; Escribir el mensaje al final del archivo
-    mov eax, 4        ; Código de llamada al sistema para escribir en un archivo
-    mov ebx, [fileIdentificator]      ; Descriptor de archivo devuelto por la llamada a sys_open
-    mov edx, ecx      ; Longitud del mensaje
-    mov ecx, palabra2  ; Puntero al mensaje a escribir
-    int 80h          ; Llamar al sistema para escribir en el archivo
-
-    ; Cerrar el archivo
-    mov eax, 6
-    mov ebx, [fileIdentificator]
-    int 80h
-    test eax,eax
-    js errorClosing_handling
-
-    jmp _start
-
 abrirArchivo:
-    ; nuevaLinea
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, palabra3
-    mov edx, 100
-    int 80h
-
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
