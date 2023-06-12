@@ -22,7 +22,13 @@ section .data
     pruebaLen equ $ - prueba
     length db 128 dup(0) 
     fraseLength db 128 dup(0) 
-    patata db 100 dup(0)
+    lenAux db 100 dup(0)
+
+    empty db 100 dup(0)     ;variable para vaciar palabraAux
+
+    ebxAux db 10 dup(0)
+    ecxAux db 10 dup(0)
+    ediAux db 10 dup(0)
 
 section .bss
     fileIdentificator resb 100
@@ -40,12 +46,12 @@ _start:
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     ; Limpiar palabra1
-    mov edi, patata ; Dirección base de palabra1
+    mov edi, lenAux ; Dirección base de palabra1
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     ; Limpiar palabra1
-    mov edi, [patata] ; Dirección base de palabra1
+    mov edi, [lenAux] ; Dirección base de palabra1
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
@@ -264,13 +270,6 @@ almacenar_palabra3:
 
 
 abrirArchivo:
-
-    ;call nuevaLinea
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, palabra3
-    mov edx, 100
-    int 80h
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
@@ -370,6 +369,70 @@ abrirArchivo:
             jmp recorrer_fraseDeseado
 
         siguiente_palabraDeseado:
+            mov [ediAux],edi
+            mov [ebxAux],ebx
+            mov [ecxAux],ecx
+
+            ; el regitro se queda en palabraaux
+            ; comprueba que palabra 2 esta dentro
+            ; de palabraaux en ese caso imprime palabraaux 
+
+            mov ebx,palabra2
+            call len            ;obtener longitud de frase
+            mov [lenAux],ecx
+
+            mov edi, palabraAux
+            mov esi, palabra2
+
+            ;como la propia subrutina ya guarda
+            ;el valor en ecx nos ahorramos tener que hacerlo
+            mov ecx, 100        ;longitud de frase
+
+            lodsb         
+
+            search:
+                repne scasb   ; Busca la primera letra de la palabra
+                jne notFound
+
+                ; Hemos encontrado la primera "l". EDI apunta a la siguiente "a", ECX=18.
+                push esi
+                push edi
+                push ecx
+                mov ecx, [lenAux]
+                dec ecx       ; La primera letra de Word ya ha sido comprobada.
+                repe cmpsb    ; Establece ZF=1 cuando se encuentra la palabra.
+                pop ecx       ; Restaura el tamaño restante de Sentence (18).
+                pop edi       ; Restaura el puntero de Sentence después de "l".
+                pop esi       ; Restaura el puntero de Word a "os".
+                jne search    ; Si ZF=0, busca "l" nuevamente. La segunda vez será exitoso.
+
+            found:
+                ; La palabra se encontró en Sentence en la dirección EDI-1.
+                ; Aquí puedes agregar el código que deseas ejecutar cuando se encuentra la palabra.
+                mov eax, 4                  ; Número de llamada al sistema para escribir
+                mov ebx, 1                  ; Descriptor de archivo (stdout)
+                mov ecx, palabraAux            ; Puntero al mensaje
+                mov edx, 100                ; Longitud del mensaje
+                int 80h                       ; Llamar al sistema operativo
+
+            notFound:
+                ; La palabra no está presente en Sentence.
+                ; Aquí puedes agregar el código que deseas ejecutar cuando no se encuentra la palabra.
+
+        mov ecx, 100       ; Número de bytes en la variable palabraAux
+        mov esi, palabraAux ; Dirección base de la variable palabraAux
+        
+        limpiar:
+            xor eax, eax    ; Establecer eax en cero
+            mov [esi], al   ; Establecer el byte actual en cero
+            inc esi         ; Mover al siguiente byte
+            loop limpiar    ; Repetir hasta que se hayan limpiado todos los bytes
+        
+
+        mov edi,[ediAux]
+        mov ebx,[ebxAux]
+        mov ecx,[ecxAux]
+
         jmp siguiente_caracterDeseado
 
 

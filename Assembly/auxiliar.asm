@@ -24,6 +24,10 @@ section .data
     fraseLength db 128 dup(0) 
     patata db 100 dup(0)
 
+    ebxAux db 10 dup(0)
+    ecxAux db 10 dup(0)
+    ediAux db 10 dup(0)
+
 section .bss
     fileIdentificator resb 100
     content resb 4096
@@ -363,6 +367,10 @@ abrirArchivo:
             jmp recorrer_fraseDeseado
 
         siguiente_palabraDeseado:
+            mov [ediAux],edi
+            mov [ebxAux],ebx
+            mov [ecxAux],ecx
+
             ; el regitro se queda en palabraaux
             ; comprueba que palabra 2 esta dentro
             ; de palabraaux en ese caso imprime palabraaux 
@@ -408,6 +416,10 @@ abrirArchivo:
             notFound:
                 ; La palabra no está presente en Sentence.
                 ; Aquí puedes agregar el código que deseas ejecutar cuando no se encuentra la palabra.
+            mov edi,[ediAux]
+            mov ebx,[ebxAux]
+            mov ecx,[ecxAux]
+
         jmp _start
 
 
