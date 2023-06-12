@@ -86,16 +86,34 @@ _start:
     xor eax, eax     ; Valor cero
     rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
+    ; Limpiar palabra auxiliar
+    mov edi, frase ; Dirección base de fileIdentificator
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
+
+    ; Limpiar palabra auxiliar
+    mov edi, [frase] ; Dirección base de fileIdentificator
+    xor eax, eax     ; Valor cero
+    rep stosb        ; Almacenar valor cero en ecx bytes desde edi
 
     mov ecx, 100       ; Número de bytes en la variable palabraAux
-    mov esi, palabra3 ; Dirección base de la variable palabraAux
-        
-    limpiarPalabra3:
+    mov esi, frase ; Dirección base de la variable palabraAux
+    
+    limpiarFrase:
         xor eax, eax    ; Establecer eax en cero
         mov [esi], al   ; Establecer el byte actual en cero
         inc esi         ; Mover al siguiente byte
-        loop limpiarPalabra3    ; Repetir hasta que se hayan limpiado todos los bytes
-     
+        loop limpiarFrase    ; Repetir hasta que se hayan limpiado todos los bytes
+    
+    mov ecx, 100       ; Número de bytes en la variable palabraAux
+    mov esi, content ; Dirección base de la variable palabraAux
+    
+    limpiarContent:
+        xor eax, eax    ; Establecer eax en cero
+        mov [esi], al   ; Establecer el byte actual en cero
+        inc esi         ; Mover al siguiente byte
+        loop limpiarContent    ; Repetir hasta que se hayan limpiado todos los bytes
+    
 
 
     ; nuevaLinea
@@ -111,8 +129,6 @@ _start:
     mov ecx, saltoLinea
     mov edx, 2
     int 80h
-
-
 
     ; Leer la frase ingresada por el usuario
     mov eax, 3                  ; Número de llamada al sistema para leer
@@ -344,13 +360,6 @@ escribirEnArchivo:
     jmp _start
 
 abrirArchivo:
-    ; nuevaLinea
-    mov eax, 4
-    mov ebx, 1
-    mov ecx, palabra3
-    mov edx, 100
-    int 80h
-
     ;call nuevaLinea
     mov eax, 4
     mov ebx, 1
