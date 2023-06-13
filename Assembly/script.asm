@@ -664,8 +664,8 @@ debug:
 ;retorna la longitud en ecx
 len:
     push ebx
-    mov ecx,0
-    dec ebx
+    mov ecx,0   
+    dec ebx ; primer caracter de la palabra
     count:
         inc ecx
         inc ebx
