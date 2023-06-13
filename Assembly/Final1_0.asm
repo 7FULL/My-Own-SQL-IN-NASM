@@ -1,4 +1,4 @@
-section .data
+ section .data
     frase db 100 dup(0) 
     longitud equ 100    
     palabra1 db 100 dup(0)
@@ -151,36 +151,36 @@ _start:
     mov ecx, 0       ; Indicador de posición en la palabra
     mov edi, palabra1 ; Dirección de la primera palabra
 
-recorrer_frase:
+recorrerFrase:
     ; Verificar si hemos llegado al final de la frase
     cmp ebx, longitud
-    jge siguiente_palabra
+    jge siguientePalabra
 
     ; Obtener el carácter actual
     mov al, [frase + ebx]
 
     ; Verificar si es un espacio en blanco
     cmp al, ' '
-    je siguiente_palabra
+    je siguientePalabra
 
     ; Almacenar el carácter en la palabra correspondiente
     mov [edi + ecx], al
 
     ; Incrementar el contador de posición en la palabra
     inc ecx
-    jmp siguiente_caracter
+    jmp siguienteCaracter
 
-siguiente_caracter:
+siguienteCaracter:
     ; Incrementar el contador de posición en la frase y continuar recorriendo
     inc ebx
-    jmp recorrer_frase
+    jmp recorrerFrase
 
-siguiente_palabra:
+siguientePalabra:
     ; Verificar si ya se ha almacenado la primera palabra
     cmp edi, palabra1
-    je almacenar_palabra2
+    je almacenarPalabra2
     cmp edi, palabra2
-    je almacenar_palabra3
+    je almacenarPalabra3
     cmp edi, palabra3
     jmp fin
 
@@ -190,7 +190,7 @@ fin:
     mov esi, palabra1   
     mov edi, select    
 
-    comparar_caracteres:
+    compararCaracteres:
         ; vamos conparando las letras
         mov al, [esi + ecx] 
         cmp al, [edi + ecx] 
@@ -202,7 +202,7 @@ fin:
 
         ; Incrementar contador y continuar comparando
         inc ecx
-        jmp comparar_caracteres
+        jmp compararCaracteres
 
     comprobarInsert:
         ; Inicializar registros
@@ -210,7 +210,7 @@ fin:
         mov esi, palabra1
         mov edi, insert    
 
-    comparar_caracteresInsert:
+    compararCaracteresInsert:
         ; vamos comparando las letras
         mov al, [esi + ecx] 
         cmp al, [edi + ecx] 
@@ -222,7 +222,7 @@ fin:
 
         ; Incrementar contador y continuar comparando
         inc ecx
-        jmp comparar_caracteresInsert
+        jmp compararCaracteresInsert
 
     insertDone:
         ;Preparar el registro a insertar
@@ -273,7 +273,7 @@ fin:
         mov esi, palabra1   
         mov edi, exitText  
 
-    comparar_caracteresExit:
+    compararCaracteresExit:
         ; vamos comprobando las letras
         mov al, [esi + ecx] 
         cmp al, [edi + ecx] 
@@ -285,7 +285,7 @@ fin:
 
         ; Incrementar contador y continuar comparando
         inc ecx
-        jmp comparar_caracteresExit
+        jmp compararCaracteresExit
 
     selectDone:
         ;Preparar el input para poder abrir el archivo
@@ -312,19 +312,19 @@ fin:
 
         jmp abrirArchivo
 
-almacenar_palabra2:
+almacenarPalabra2:
     ; sobreescribimos el puntero al registro1 por el registro 2
     ; Inicializar los registros
     mov ecx, 0       ; Indicador de posición en la palabra
     mov edi, palabra2 ; Dirección de la segunda palabra
-    jmp siguiente_caracter
+    jmp siguienteCaracter
 
-almacenar_palabra3:
+almacenarPalabra3:
     ; sobreescribimos el puntero al registro 2 por el registro 3
     ; Inicializar los registros
     mov ecx, 0       ; Indicador de posición en la palabra
     mov edi, palabra3 ; Dirección de la tercera palabra
-    jmp siguiente_caracter
+    jmp siguienteCaracter
 
 
 
@@ -340,7 +340,7 @@ escribirEnArchivo:
     mov edx, 02002h     ; append (escribir al final del archivo)
     int 80h
     test eax, eax
-    js errorOpen_handling
+    js errorOpenHandling
     mov [fileIdentificator], eax  ; Guardar el descriptor
 
     ; Mover el puntero de archivo al final del archivo
@@ -364,7 +364,7 @@ escribirEnArchivo:
     mov ebx, [fileIdentificator]
     int 80h
     test eax,eax
-    js errorClosing_handling
+    js errorClosingHandling
 
     jmp _start
 
@@ -383,7 +383,7 @@ abrirArchivo:
     mov edx, 0
     int 80h
     test eax, eax
-    js errorOpen_handling
+    js errorOpenHandling
     mov [fileIdentificator], eax  ; Guardar el descriptor
 
     ; Leer el contenido del archivo
@@ -393,7 +393,7 @@ abrirArchivo:
     mov edx, 4096
     int 80h
     test eax, eax
-    js errorReading_handling
+    js errorReadingHandling
 
     ; Mostrar el contenido del archivo
     ;mov eax, 4
@@ -406,7 +406,7 @@ abrirArchivo:
     mov ebx, [fileIdentificator]
     int 80h
     test eax,eax
-    js errorClosing_handling
+    js errorClosingHandling
 
 
     ;<<<<<<<<Aqui empezamos la comprobacion de que devolver>>>>>>>>
@@ -417,7 +417,7 @@ abrirArchivo:
     mov esi, palabra2
     mov edi, todo    
 
-    comparar_caracteresPalabra2:
+    compararCaracteresPalabra2:
         ; vamos comparando las letras
         mov al, [esi] 
         cmp al, [edi] 
@@ -440,7 +440,7 @@ abrirArchivo:
         mov ecx, 0       ; Indicador de posición en la palabra
         mov edi, palabraAux ; Dirección de la primera palabra
 
-        recorrer_fraseDeseado:
+        recorrerFraseDeseado:
             ; Verificar si hemos llegado al final de la frase
             cmp ebx, longitud
             jge _start
@@ -450,7 +450,7 @@ abrirArchivo:
 
             ; Verificar si es un espacio en blanco
             cmp al, ";"
-            je siguiente_palabraDeseado
+            je siguientePalabraDeseado
             ;si quisiesemos que el ";" tambien se incluyese en la frase
             ;solo comparariamos depues de la instruccion de almacenar y ya
 
@@ -459,15 +459,15 @@ abrirArchivo:
 
             ; Incrementar el contador de posición en la palabra
             inc ecx
-            jmp siguiente_caracterDeseado
+            jmp siguienteCaracterDeseado
 
-        siguiente_caracterDeseado:
+        siguienteCaracterDeseado:
             ; Incrementar el contador de posición en la frase y continuar recorriendo
             ; call debug
             inc ebx
-            jmp recorrer_fraseDeseado
+            jmp recorrerFraseDeseado
 
-        siguiente_palabraDeseado:
+        siguientePalabraDeseado:
             mov [ediAux],edi
             mov [ebxAux],ebx
             mov [ecxAux],ecx
@@ -532,7 +532,7 @@ abrirArchivo:
         mov ebx,[ebxAux]
         mov ecx,[ecxAux]
 
-        jmp siguiente_caracterDeseado
+        jmp siguienteCaracterDeseado
 
 
 
@@ -593,7 +593,7 @@ ordenNoEncontrada:
 
     jmp _start
 
-errorOpen_handling:
+errorOpenHandling:
     mov eax, 4
     mov ebx, 2
     mov ecx, error
@@ -602,7 +602,7 @@ errorOpen_handling:
 
     jmp _start
 
-errorClosing_handling:
+errorClosingHandling:
     mov eax, 4
     mov ebx, 2
     mov ecx, error4
@@ -610,7 +610,7 @@ errorClosing_handling:
     int 80h
     jmp _start
 
-errorReading_handling:
+errorReadingHandling:
     mov eax, 4
     mov ebx, 2
     mov ecx, error2
